@@ -1,0 +1,25 @@
+{
+  "name": "generic-chat-app",
+  "version": "1.0.0",
+  "description": "A app to send messages and stuff.",
+  "main": "script.js",
+  "scripts": {
+    "dev": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ericafk0001/generic-chat-app.git"
+  },
+  "author": "Eric Lin",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ericafk0001/generic-chat-app/issues"
+  },
+  "homepage": "https://github.com/ericafk0001/generic-chat-app#readme",
+  "dependencies": {
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}
