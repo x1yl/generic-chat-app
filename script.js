@@ -3,12 +3,42 @@ const messageForm = document.getElementById("send-container");
 const messageInput = document.getElementById("message-input");
 const messageContainer = document.getElementById("message-container");
 
-const name = prompt("What is your name?");
-appendMessage("You joined");
-socket.emit("new-user", name);
+Swal.fire({
+  title: "Welcome! Enter your name:",
+  input: "text",
+  inputPlaceholder: "Your name",
+  confirmButtonText: "Join",
+  allowOutsideClick: false,
+  inputValidator: (value) => {
+    if (!value) {
+      return "You need to enter a name!";
+    }
+  },
+}).then((result) => {
+  if (result.isConfirmed) {
+    appendMessage("You joined");
+    socket.emit("new-user", result.value);
+    return result.value;
+  }
+});
+
+socket.on("chat-history", (history) => {
+  messageContainer.innerHTML = "";
+  history.forEach((msg) => {
+    const time = new Date(msg.timestamp).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    appendMessage(`(${time}) ${msg.name}: ${msg.message}`);
+  });
+});
 
 socket.on("chat-message", (data) => {
-  appendMessage(`${data.name}: ${data.message}`);
+  const time = new Date(data.timestamp).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  appendMessage(`(${time}) ${data.name}: ${data.message}`);
 });
 
 socket.on("user-connected", (name) => {
@@ -29,5 +59,7 @@ messageForm.addEventListener("submit", (e) => {
 function appendMessage(message) {
   const messageElement = document.createElement("div");
   messageElement.innerText = message;
-  messageContainer.append(messageElement);
+  messageContainer.appendChild(messageElement);
+  // auto scroll to bottom
+  messageContainer.scrollTop = messageContainer.scrollHeight;
 }
