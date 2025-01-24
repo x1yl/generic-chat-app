@@ -42,7 +42,7 @@ async function loadChatHistory() {
     return await messagesCollection
       .find({})
       .sort({ timestamp: 1 })
-      .limit(100)
+      .limit(50)
       .toArray();
   } catch (err) {
     console.error("Error loading chat history:", err);
@@ -61,7 +61,7 @@ const io = require("socket.io")(3000, {
 });
 
 io.on("connection", (socket) => {
-  console.log("User connected");
+  console.log("user connected");
 
   loadChatHistory().then((history) => {
     socket.emit("chat-history", history);
@@ -71,6 +71,7 @@ io.on("connection", (socket) => {
     users[socket.id] = name;
     socket.broadcast.emit("user-connected", name);
   });
+
   socket.on("send-chat-message", async (message) => {
     const name = users[socket.id];
     await saveMessage(name, message);

@@ -3,6 +3,8 @@ const messageForm = document.getElementById("send-container");
 const messageInput = document.getElementById("message-input");
 const messageContainer = document.getElementById("message-container");
 
+const nameDisplay = document.getElementById("name-display");
+
 Swal.fire({
   title: "Welcome! Enter your name:",
   input: "text",
@@ -18,6 +20,9 @@ Swal.fire({
   if (result.isConfirmed) {
     appendMessage("You joined");
     socket.emit("new-user", result.value);
+    nameDisplay.innerText = result.value;
+    nameDisplay.style.color = "rgb(92, 180, 92)";
+    document.title = "Connected as " + result.value;
     return result.value;
   }
 });
@@ -57,7 +62,8 @@ messageForm.addEventListener("submit", (e) => {
 });
 
 function appendMessage(message) {
-  const messageElement = document.createElement("div");
+  const messageElement = document.createElement("p");
+  messageElement.classList.add("server-message");
   messageElement.innerText = message;
   messageContainer.appendChild(messageElement);
   // auto scroll to bottom

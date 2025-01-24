@@ -8,13 +8,40 @@
     <script defer src="http://localhost:3000/socket.io/socket.io.js"></script>
   </head>
   <body>
+    <p class="name-display-p">
+      Logged in as: <span id="name-display">Disconnected</span>
+    </p>
+    <div id="online-count"></div>
+
     <div id="chat-container">
       <div id="message-container"></div>
+    </div>
+
+    <div id="send-div">
       <form id="send-container">
-        <input type="text" id="message-input" />
-        <button type="submit" id="send-button">Send</button>
+        <input type="text" id="message-input" autocomplete="off" />
+        <button type="submit" id="send-button">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 664 663"
+          >
+            <path
+              fill="none"
+              d="M646.293 331.888L17.7538 17.6187L155.245 331.888M646.293 331.888L17.753 646.157L155.245 331.888M646.293 331.888L318.735 330.228L155.245 331.888"
+            ></path>
+            <path
+              stroke-linejoin="round"
+              stroke-linecap="round"
+              stroke-width="33.67"
+              stroke="#6c6c6c"
+              d="M646.293 331.888L17.7538 17.6187L155.245 331.888M646.293 331.888L17.753 646.157L155.245 331.888M646.293 331.888L318.735 330.228L155.245 331.888"
+            ></path>
+          </svg>
+        </button>
       </form>
     </div>
+
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"
