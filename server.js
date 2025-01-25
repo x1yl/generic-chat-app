@@ -1,6 +1,6 @@
-import * as dotenv from 'dotenv';
-import mysql from 'mysql2/promise';
-import { Server } from 'socket.io';
+import * as dotenv from "dotenv";
+import mysql from "mysql2/promise";
+import { Server } from "socket.io";
 
 dotenv.config();
 
@@ -14,11 +14,16 @@ async function connectMySQL() {
       user: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_DATABASE,
-      port: process.env.DB_PORT, 
-      ssl: process.env.TIDB_ENABLE_SSL === 'true' ? {
-        minVersion: 'TLSv1.2',
-        ca: process.env.TIDB_CA_PATH ? fs.readFileSync(process.env.TIDB_CA_PATH) : undefined
-     } : null,
+      port: process.env.DB_PORT,
+      ssl:
+        process.env.TIDB_ENABLE_SSL === "true"
+          ? {
+              minVersion: "TLSv1.2",
+              ca: process.env.TIDB_CA_PATH
+                ? fs.readFileSync(process.env.TIDB_CA_PATH)
+                : undefined,
+            }
+          : null,
     });
 
     await connection.execute(`
@@ -29,7 +34,7 @@ async function connectMySQL() {
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    
+
     console.log("Successfully connected to MySQL!");
   } catch (err) {
     console.error("MySQL connection error:", err);
@@ -38,15 +43,12 @@ async function connectMySQL() {
 
 async function saveMessage(name, message) {
   try {
+    const timestamp = new Date();
     await connection.execute(
-      'INSERT INTO messages (name, message) VALUES (?, ?)',
-      [name, message]
+      "INSERT INTO messages (name, message, timestamp) VALUES (?, ?, ?)",
+      [name, message, timestamp]
     );
-    return {
-      name,
-      message,
-      timestamp: new Date()
-    };
+    return { name, message, timestamp };
   } catch (err) {
     console.error("Error saving message:", err);
     return null;
@@ -56,7 +58,7 @@ async function saveMessage(name, message) {
 async function loadChatHistory() {
   try {
     const [rows] = await connection.execute(
-      'SELECT * FROM messages ORDER BY timestamp ASC LIMIT 50'
+      "SELECT * FROM messages ORDER BY timestamp ASC LIMIT 50"
     );
     return rows;
   } catch (err) {
@@ -114,9 +116,11 @@ io.on("connection", (socket) => {
   });
 });
 
-['SIGINT', 'SIGTERM'].forEach(signal => {
+["SIGINT", "SIGTERM"].forEach((signal) => {
   process.on(signal, async () => {
-    console.log(`\n${signal} received. Closing MySQL connection and exiting...`);
+    console.log(
+      `\n${signal} received. Closing MySQL connection and exiting...`
+    );
     await connection.end();
     process.exit(0);
   });
