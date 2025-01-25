@@ -1,34 +1,3 @@
-import * as dotenv from "dotenv";
-import mysql from "mysql2";
-dotenv.config();
-
-const connection = mysql.createConnection({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: process.env.DB_PORT,
-  ssl: true,
-});
-
-connection.connect((err) => {
-  if (err) {
-    console.error("Error connecting to the database:", err.message);
-    return;
-  }
-  console.log("Connected to the MySQL database!");
-});
-
-connection.query("SELECT 1 + 1 AS solution", (err, results) => {
-  if (err) {
-    console.error("Error executing query:", err.message);
-    return;
-  }
-  console.log("The solution is:", results[0].solution);
-});
-
-connection.end();
-
 const socket = io("http://localhost:3000");
 const messageForm = document.getElementById("send-container");
 const messageInput = document.getElementById("message-input");

@@ -1,39 +1,52 @@
-const { MongoClient, ServerApiVersion } = require("mongodb");
-const uri =
-  "mongodb+srv://8percent:Lk83uldHQv2qwZtf@generic-chat-app.k3mec.mongodb.net/?retryWrites=true&w=majority&appName=generic-chat-app";
+import * as dotenv from 'dotenv';
+import mysql from 'mysql2/promise';
+import { Server } from 'socket.io';
 
-// MongoDB connection
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  },
-});
+dotenv.config();
 
-let messagesCollection;
+let connection;
 const users = {};
 
-async function connectMongo() {
+async function connectMySQL() {
   try {
-    await client.connect();
-    const db = client.db("chat-app");
-    messagesCollection = db.collection("messages");
-    console.log("Successfully connected to MongoDB!");
+    connection = await mysql.createConnection({
+      host: process.env.DB_HOST,
+      user: process.env.DB_USERNAME,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_DATABASE,
+      port: process.env.DB_PORT, 
+      ssl: process.env.TIDB_ENABLE_SSL === 'true' ? {
+        minVersion: 'TLSv1.2',
+        ca: process.env.TIDB_CA_PATH ? fs.readFileSync(process.env.TIDB_CA_PATH) : undefined
+     } : null,
+    });
+
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS messages (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        message TEXT NOT NULL,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    
+    console.log("Successfully connected to MySQL!");
   } catch (err) {
-    console.error("MongoDB connection error:", err);
+    console.error("MySQL connection error:", err);
   }
 }
 
 async function saveMessage(name, message) {
   try {
-    const messageDoc = {
+    await connection.execute(
+      'INSERT INTO messages (name, message) VALUES (?, ?)',
+      [name, message]
+    );
+    return {
       name,
       message,
-      timestamp: new Date(),
+      timestamp: new Date()
     };
-    const result = await messagesCollection.insertOne(messageDoc);
-    return messageDoc;
   } catch (err) {
     console.error("Error saving message:", err);
     return null;
@@ -42,23 +55,22 @@ async function saveMessage(name, message) {
 
 async function loadChatHistory() {
   try {
-    return await messagesCollection
-      .find({})
-      .sort({ timestamp: 1 })
-      .limit(50)
-      .toArray();
+    const [rows] = await connection.execute(
+      'SELECT * FROM messages ORDER BY timestamp ASC LIMIT 50'
+    );
+    return rows;
   } catch (err) {
     console.error("Error loading chat history:", err);
     return [];
   }
 }
 
-connectMongo();
+await connectMySQL();
 
 // Socket.IO Server Setup
-const io = require("socket.io")(3000, {
+const io = new Server(3000, {
   cors: {
-    origin: "*", // Allow all origins; for production, specify the domain you want to allow.
+    origin: "*",
     methods: ["GET", "POST"],
   },
 });
@@ -99,5 +111,13 @@ io.on("connection", (socket) => {
     socket.broadcast.emit("user-disconnected", users[socket.id]);
     delete users[socket.id];
     io.emit("user-count", io.engine.clientsCount);
+  });
+});
+
+['SIGINT', 'SIGTERM'].forEach(signal => {
+  process.on(signal, async () => {
+    console.log(`\n${signal} received. Closing MySQL connection and exiting...`);
+    await connection.end();
+    process.exit(0);
   });
 });
