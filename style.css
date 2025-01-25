@@ -59,15 +59,34 @@ body {
   scrollbar-color: #4a4a4a #2a2a2a;
 }
 
+.message-container {
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+}
+
 #name-display {
   font-size: 24px;
   font-weight: 600;
   color: rgb(234, 61, 61);
 }
 
+#online-count {
+  font-size: 24px;
+  font-weight: 600;
+  color: rgb(76, 234, 61);
+}
+
+.online-count-p {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  font-size: 24px;
+}
+
 .name-display-p {
-  margin-left: 12px;
-  margin-top: 12px;
+  margin-left: 14px;
+  margin-top: 14px;
   font-size: 24px;
 }
 
@@ -76,14 +95,41 @@ body {
 .server-notification {
   display: inline-block;
   width: fit-content;
-  max-width: 80%;
+  max-width: 45%;
   padding: 0.5rem 1rem;
   margin: 0.1rem;
   border-radius: 18px;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.client-container {
+  align-self: flex-end;
+  align-items: flex-end;
+  width: 45%;
+  display: flex;
+  flex-direction: column;
+}
+
+.server-container {
+  align-self: flex-start;
+  align-items: flex-start;
+  width: 45%;
+  display: flex;
+  flex-direction: column;
 }
 
 .client-message {
-  background-color: #8a4fea;
+  align-self: flex-end;
+  background-image: linear-gradient(
+    to right,
+    #538ce0,
+    #4986e5,
+    #407fe9,
+    #3a78ed,
+    #3870f0
+  );
   color: rgb(255, 255, 255);
 }
 
@@ -93,8 +139,15 @@ body {
 }
 
 .server-notification {
-  background-color: #f8f8f8;
-  color: #232323;
+  background-color: transparent;
+  color: rgba(255, 255, 255, 0.702);
+}
+
+.timestamp {
+  font-size: 0.7rem;
+  color: #808080;
+  margin-top: 2px;
+  margin-left: 3px;
 }
 
 #send-div {

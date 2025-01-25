@@ -27,13 +27,16 @@ async function connectMongo() {
 
 async function saveMessage(name, message) {
   try {
-    await messagesCollection.insertOne({
+    const messageDoc = {
       name,
       message,
       timestamp: new Date(),
-    });
+    };
+    const result = await messagesCollection.insertOne(messageDoc);
+    return messageDoc;
   } catch (err) {
     console.error("Error saving message:", err);
+    return null;
   }
 }
 
@@ -62,31 +65,39 @@ const io = require("socket.io")(3000, {
 
 io.on("connection", (socket) => {
   console.log("user connected");
+  let userCount = io.engine.clientsCount;
 
-  loadChatHistory().then((history) => {
-    socket.emit("chat-history", history);
-  });
+  io.emit("user-count", userCount);
 
   socket.on("new-user", (name) => {
     users[socket.id] = name;
     socket.broadcast.emit("user-connected", name);
+    io.emit("user-count", io.engine.clientsCount);
+
+    //load chat only after user has joined
+    loadChatHistory().then((history) => {
+      socket.emit("chat-history", history);
+    });
   });
 
   socket.on("send-chat-message", async (message) => {
     const name = users[socket.id];
-    await saveMessage(name, message);
+    const savedMessage = await saveMessage(name, message);
 
-    const messageData = {
-      message,
-      name,
-      timestamp: new Date(),
-    };
-    socket.broadcast.emit("chat-message", messageData);
-    socket.emit("chat-message", messageData);
+    if (savedMessage) {
+      const messageData = {
+        message: savedMessage.message,
+        name: savedMessage.name,
+        timestamp: savedMessage.timestamp,
+      };
+      socket.broadcast.emit("chat-message", messageData);
+      socket.emit("chat-message", messageData);
+    }
   });
 
   socket.on("disconnect", () => {
     socket.broadcast.emit("user-disconnected", users[socket.id]);
     delete users[socket.id];
+    io.emit("user-count", io.engine.clientsCount);
   });
 });
