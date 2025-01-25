@@ -25,9 +25,6 @@ Swal.fire({
     nameDisplay.style.color = "rgb(67, 121, 247)";
     document.title = "Connected as " + result.value;
     hasJoined = true;
-    setTimeout(() => {
-      appendServerNotify("You joined");
-    }, 350);
     return result.value;
   }
 });
@@ -46,6 +43,7 @@ socket.on("chat-history", (history) => {
       appendServerMessage(message, time);
     }
   });
+  appendServerNotify("You joined");
 });
 
 socket.on("chat-message", (data) => {
