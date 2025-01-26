@@ -1,6 +1,6 @@
 # Generic Chat Web Application
 
-A simple yet sophisticated chat application made with Node.js, socket.io, SweetAlert2, and mySQL2. Features everything a normal chat application would have, such as chat history, user and server colors, and an authentication system.
+A simple yet sophisticated chat application made with Node.js, socket.io, SweetAlert2, and mySQL2. Features everything a normal chat application would have, such as chat history, user and server colors, and an authentication system. Hosted with Render and Github pages.
 
 ## Features
 
