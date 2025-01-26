@@ -65,6 +65,23 @@ body {
   max-width: 100%;
 }
 
+#header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 14px;
+}
+
+#title {
+  flex: 2;
+  text-align: center;
+  font-weight: 600;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
 #name-display {
   font-size: 24px;
   font-weight: 600;
@@ -78,15 +95,14 @@ body {
 }
 
 .online-count-p {
-  position: absolute;
-  right: 14px;
-  top: 14px;
+  flex: 1;
+  text-align: right;
   font-size: 24px;
 }
 
 .name-display-p {
-  margin-left: 14px;
-  margin-top: 14px;
+  flex: 1;
+  text-align: left;
   font-size: 24px;
 }
 
@@ -215,4 +231,24 @@ body {
 #send-button:hover svg path {
   fill: #3c3c3c;
   stroke: white;
+}
+
+@media screen and (max-width: 480px) {
+  #title,
+  .name-display-p,
+  .online-count-p,
+  #online-count,
+  #name-display {
+    font-size: 18px;
+  }
+
+  #title {
+    margin-top: 45px;
+  }
+
+  .client-message,
+  .server-message,
+  .server-notification {
+    max-width: 95%;
+  }
 }

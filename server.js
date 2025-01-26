@@ -27,15 +27,27 @@ async function connectMySQL() {
     });
 
     await connection.execute(`
-      CREATE TABLE IF NOT EXISTS messages (
+      CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        message TEXT NOT NULL,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        username VARCHAR(255) NOT NULL UNIQUE,
+        socket_id VARCHAR(255) NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
-    console.log("Successfully connected to MySQL!");
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS messages (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT,
+        name VARCHAR(255) NOT NULL,
+        message TEXT NOT NULL,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+      )
+    `);
+
+    console.log("Successfully connected to MySQL and created tables!");
   } catch (err) {
     console.error("MySQL connection error:", err);
   }
@@ -67,6 +79,45 @@ async function loadChatHistory() {
   }
 }
 
+async function verifyPassword(username, password) {
+  try {
+    const [rows] = await connection.execute(
+      "SELECT password FROM users WHERE username = ?",
+      [username]
+    );
+    return rows.length > 0 && rows[0].password === password;
+  } catch (err) {
+    console.error("Error verifying password:", err);
+    return false;
+  }
+}
+
+async function saveUser(username, socketId, password) {
+  try {
+    const [result] = await connection.execute(
+      "INSERT INTO users (username, socket_id, password) VALUES (?, ?, ?)",
+      [username, socketId, password]
+    );
+    return result.insertId;
+  } catch (err) {
+    console.error("Error saving user:", err);
+    return null;
+  }
+}
+
+async function checkUsername(username) {
+  try {
+    const [rows] = await connection.execute(
+      "SELECT username FROM users WHERE username = ?",
+      [username]
+    );
+    return rows.length > 0;
+  } catch (err) {
+    console.error("Error checking username:", err);
+    return false;
+  }
+}
+
 await connectMySQL();
 
 // Socket.IO Server Setup
@@ -83,15 +134,35 @@ io.on("connection", (socket) => {
 
   io.emit("user-count", userCount);
 
-  socket.on("new-user", (name) => {
-    users[socket.id] = name;
-    socket.broadcast.emit("user-connected", name);
-    io.emit("user-count", io.engine.clientsCount);
+  socket.on("new-user", async (data) => {
+    const { username, password } = data;
+    const userExists = await checkUsername(username);
 
-    //load chat only after user has joined
-    loadChatHistory().then((history) => {
-      socket.emit("chat-history", history);
-    });
+    if (userExists) {
+      const validPassword = await verifyPassword(username, password);
+      if (validPassword) {
+        users[socket.id] = username;
+        socket.emit("auth-success", username); // Pass username back
+        loadChatHistory().then((history) =>
+          socket.emit("chat-history", history)
+        );
+      } else {
+        socket.emit("auth-failed");
+      }
+    } else {
+      // New user registration
+      const userId = await saveUser(username, socket.id, password);
+      if (userId) {
+        users[socket.id] = username;
+        socket.emit("auth-success", username); // Pass username back
+        socket.broadcast.emit("user-connected", username);
+        loadChatHistory().then((history) => {
+          socket.emit("chat-history", history);
+        });
+      } else {
+        socket.emit("auth-failed");
+      }
+    }
   });
 
   socket.on("send-chat-message", async (message) => {

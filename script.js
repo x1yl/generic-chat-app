@@ -6,27 +6,95 @@ const messageContainer = document.getElementById("message-container");
 const nameDisplay = document.getElementById("name-display");
 
 let hasJoined = false;
+let currentUsername = "";
 
 Swal.fire({
-  title: "Welcome! Enter your name:",
-  input: "text",
-  inputPlaceholder: "Your name",
+  title: "Welcome!",
+  html: `
+    <input type="text" id="username" class="swal2-input" placeholder="Username" autocomplete="off">
+    <input type="password" id="password" class="swal2-input" placeholder="Password" autocomplete="off">
+  `,
   confirmButtonText: "Join",
   allowOutsideClick: false,
-  inputValidator: (value) => {
-    if (!value) {
-      return "You need to enter a name!";
+  preConfirm: () => {
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+    if (!username || !password) {
+      Swal.showValidationMessage("Please enter both username and password");
+      return false;
     }
+    return { username, password };
   },
 }).then((result) => {
   if (result.isConfirmed) {
     socket.emit("new-user", result.value);
-    nameDisplay.innerText = result.value;
-    nameDisplay.style.color = "rgb(67, 121, 247)";
-    document.title = "Connected as " + result.value;
-    hasJoined = true;
-    return result.value;
   }
+});
+
+socket.on("username-taken", (name) => {
+  Swal.fire({
+    title: "Username taken",
+    text: `The username "${name}" is already taken. Please try another one.`,
+    input: "text",
+    inputPlaceholder: "Your name",
+    confirmButtonText: "Join",
+    allowOutsideClick: false,
+    inputValidator: (value) => {
+      if (!value) {
+        return "You need to enter a name!";
+      }
+    },
+  }).then((result) => {
+    if (result.isConfirmed) {
+      socket.emit("password-prompt");
+    }
+  });
+});
+
+Swal.fire({
+  title: "Welcome!",
+  html: `
+    <input type="text" id="username" class="swal2-input" placeholder="Username">
+    <input type="password" id="password" class="swal2-input" placeholder="Password">
+  `,
+  confirmButtonText: "Join",
+  allowOutsideClick: false,
+  preConfirm: () => {
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+    if (!username || !password) {
+      Swal.showValidationMessage("Please enter both username and password");
+      return false;
+    }
+    return { username, password };
+  },
+}).then((result) => {
+  if (result.isConfirmed) {
+    socket.emit("new-user", result.value);
+  }
+});
+
+socket.on("auth-success", (username) => {
+  hasJoined = true;
+  currentUsername = username; // Store username
+  nameDisplay.innerText = username;
+  nameDisplay.style.color = "rgb(67, 121, 247)";
+  document.title = "Connected as " + username;
+});
+
+socket.on("connect-user", (username) => {
+  nameDisplay.innerText = username;
+  nameDisplay.style.color = "rgb(67, 121, 247)";
+  document.title = "Connected as " + username;
+  hasJoined = true;
+});
+
+socket.on("auth-failed", () => {
+  Swal.fire({
+    icon: "error",
+    title: "Authentication Failed",
+    text: "Invalid username or password",
+  });
 });
 
 socket.on("chat-history", (history) => {
@@ -132,4 +200,8 @@ function appendServerNotify(message) {
   messageContainer.appendChild(messageElement);
   // auto scroll to bottom
   messageContainer.scrollTop = messageContainer.scrollHeight;
+}
+
+function suggestUsername(username) {
+  return username + Math.floor(Math.random() * 100);
 }
