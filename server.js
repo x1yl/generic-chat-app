@@ -27,6 +27,9 @@ async function connectMySQL() {
           : null,
     });
 
+    // await connection.execute("DROP TABLE IF EXISTS messages");
+    // await connection.execute("DROP TABLE IF EXISTS users");
+
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,
