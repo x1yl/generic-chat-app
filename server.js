@@ -2,6 +2,9 @@ import * as dotenv from "dotenv";
 import mysql from "mysql2/promise";
 import { Server } from "socket.io";
 
+import words from "profane-words";
+const arg = process.argv[2];
+
 dotenv.config();
 
 let connection;
@@ -56,11 +59,12 @@ async function connectMySQL() {
 async function saveMessage(name, message) {
   try {
     const timestamp = new Date();
+    const filteredMessage = filterProfanity(message);
     await connection.execute(
       "INSERT INTO messages (name, message, timestamp) VALUES (?, ?, ?)",
-      [name, message, timestamp]
+      [name, filteredMessage, timestamp]
     );
-    return { name, message, timestamp };
+    return { name, message: filteredMessage, timestamp };
   } catch (err) {
     console.error("Error saving message:", err);
     return null;
@@ -116,6 +120,13 @@ async function checkUsername(username) {
     console.error("Error checking username:", err);
     return false;
   }
+}
+
+function filterProfanity(message) {
+  return words.reduce((filtered, word) => {
+    const regex = new RegExp(word, "gi");
+    return filtered.replace(regex, "*".repeat(word.length));
+  }, message);
 }
 
 await connectMySQL();

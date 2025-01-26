@@ -19,6 +19,7 @@
   "dependencies": {
     "dotenv": "^16.4.7",
     "mongodb": "^6.12.0",
+    "profane-words": "^1.6.0",
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
