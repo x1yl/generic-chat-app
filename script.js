@@ -9,8 +9,9 @@ let hasJoined = false;
 let currentUsername = "";
 
 Swal.fire({
-  title: "Welcome!",
+  title: "👻 Welcome! 👻",
   html: `
+    <p>You will be registered automatically if you are a new user.</p>
     <input type="text" id="username" class="swal2-input" placeholder="Username" autocomplete="off">
     <input type="password" id="password" class="swal2-input" placeholder="Password" autocomplete="off">
   `,
@@ -49,29 +50,6 @@ socket.on("username-taken", (name) => {
       socket.emit("password-prompt");
     }
   });
-});
-
-Swal.fire({
-  title: "Welcome!",
-  html: `
-    <input type="text" id="username" class="swal2-input" placeholder="Username">
-    <input type="password" id="password" class="swal2-input" placeholder="Password">
-  `,
-  confirmButtonText: "Join",
-  allowOutsideClick: false,
-  preConfirm: () => {
-    const username = document.getElementById("username").value;
-    const password = document.getElementById("password").value;
-    if (!username || !password) {
-      Swal.showValidationMessage("Please enter both username and password");
-      return false;
-    }
-    return { username, password };
-  },
-}).then((result) => {
-  if (result.isConfirmed) {
-    socket.emit("new-user", result.value);
-  }
 });
 
 socket.on("auth-success", (username) => {
