@@ -4,7 +4,8 @@
   "description": "A app to send messages and stuff.",
   "main": "script.js",
   "scripts": {
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "start": "node server.js"
   },
   "repository": {
     "type": "git",
