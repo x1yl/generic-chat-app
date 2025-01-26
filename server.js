@@ -127,14 +127,12 @@ function filterProfanity(message) {
   return message
     .split(" ")
     .map((word) => {
-      // check if word contains any profane words
-      const containsProfanity = words.some((profaneWord) =>
-        word.toLowerCase().includes(profaneWord.toLowerCase())
-      );
+      // Remove punctuation for checking
+      const cleanWord = word.replace(/[^\w\s]/g, "");
 
-      if (containsProfanity) {
+      // Check if exact word is in profanity list
+      if (words.includes(cleanWord.toLowerCase())) {
         const firstLetter = word[0];
-        //only keep the first letter of the word, replaces the rest with asterisks
         return firstLetter + "*".repeat(word.length - 1);
       }
       return word;

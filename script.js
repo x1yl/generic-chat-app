@@ -1,4 +1,10 @@
-const socket = io("https://generic-chat-app.onrender.com");
+const isProduction = window.location.hostname !== "127.0.0.1";
+const SOCKET_IO_URL = isProduction
+  ? "https://generic-chat-app.onrender.com"
+  : "http://localhost:3000";
+const socket = io(SOCKET_IO_URL);
+console.log("Connected to:", SOCKET_IO_URL);
+
 const messageForm = document.getElementById("send-container");
 const messageInput = document.getElementById("message-input");
 const messageContainer = document.getElementById("message-container");
