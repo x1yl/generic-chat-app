@@ -120,11 +120,23 @@ async function checkUsername(username) {
   }
 }
 
-function filterProfanity(message, words) {
-  return words.reduce((filtered, word) => {
-    const regex = new RegExp(`\\b${word}\\b`, "gi");
-    return filtered.replace(regex, "*".repeat(word.length));
-  }, message);
+function filterProfanity(message) {
+  return message
+    .split(" ")
+    .map((word) => {
+      // check if word contains any profane words
+      const containsProfanity = words.some((profaneWord) =>
+        word.toLowerCase().includes(profaneWord.toLowerCase())
+      );
+
+      if (containsProfanity) {
+        const firstLetter = word[0];
+        //only keep the first letter of the word, replaces the rest with asterisks
+        return firstLetter + "*".repeat(word.length - 1);
+      }
+      return word;
+    })
+    .join(" ");
 }
 
 await connectMySQL();

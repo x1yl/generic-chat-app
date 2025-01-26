@@ -36,6 +36,8 @@ A simple yet sophisticated chat application made with Node.js, socket.io, SweetA
 
 ## Features to Add
 
+- Timestamp includes date if it was sent more than a few days ago
+- Better user bubbles
 - Chat Bubble Animations
 - Sounds
 - Size Customizability
