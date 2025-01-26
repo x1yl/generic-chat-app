@@ -1,9 +1,7 @@
 import * as dotenv from "dotenv";
 import mysql from "mysql2/promise";
 import { Server } from "socket.io";
-
 import words from "profane-words";
-const arg = process.argv[2];
 
 dotenv.config();
 
