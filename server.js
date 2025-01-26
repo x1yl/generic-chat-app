@@ -120,9 +120,9 @@ async function checkUsername(username) {
   }
 }
 
-function filterProfanity(message) {
+function filterProfanity(message, words) {
   return words.reduce((filtered, word) => {
-    const regex = new RegExp(word, "gi");
+    const regex = new RegExp(`\\b${word}\\b`, "gi");
     return filtered.replace(regex, "*".repeat(word.length));
   }, message);
 }
