@@ -1,6 +1,6 @@
 const isProduction = window.location.hostname !== "127.0.0.1";
 const SOCKET_IO_URL = isProduction
-  ? "https://generic-chat-app-km0c.onrender.com"
+  ? "https://generic-chat-app-pg5k.onrender.com"
   : "http://localhost:3000";
 const socket = io(SOCKET_IO_URL);
 console.log("Connected to:", SOCKET_IO_URL);

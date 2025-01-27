@@ -161,7 +161,7 @@ const io = new Server(server, {
 });
 
 setInterval(() => {
-  http.get('http://generic-chat-app-km0c.onrender.com/')
+  http.get('http://generic-chat-app-pg5k.onrender.com/')
     .on('error', err => console.error('Health check failed:', err));
 }, 5 * 60 * 1000);
 
