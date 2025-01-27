@@ -160,11 +160,6 @@ const io = new Server(server, {
   transports: ["websocket", "polling"],
 });
 
-setInterval(() => {
-  http.get('http://generic-chat-app-pg5k.onrender.com/')
-    .on('error', err => console.error('Health check failed:', err));
-}, 5 * 60 * 1000);
-
 io.on("connection", (socket) => {
   console.log("user connected");
   let userCount = io.engine.clientsCount;
