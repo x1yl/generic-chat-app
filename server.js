@@ -6,32 +6,48 @@ import http from "http";
 const PORT = process.env.PORT || 3000;
 dotenv.config();
 
-let connection;
+// Replace single connection with pool
+const pool = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USERNAME,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_DATABASE,
+  port: process.env.DB_PORT,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 0,
+  ssl: process.env.TIDB_ENABLE_SSL === "true"
+    ? {
+        minVersion: "TLSv1.2",
+        ca: process.env.TIDB_CA_PATH
+          ? fs.readFileSync(process.env.TIDB_CA_PATH)
+          : undefined,
+      }
+    : null,
+});
+
 const users = {};
+
+// Add health check function
+async function checkConnection() {
+  try {
+    await pool.query('SELECT 1');
+    console.log('Database connection is healthy');
+  } catch (err) {
+    console.error('Database connection error:', err);
+  }
+}
+
+// Run health check every 5 minutes
+setInterval(checkConnection, 5 * 60 * 1000);
 
 async function connectMySQL() {
   try {
-    connection = await mysql.createConnection({
-      host: process.env.DB_HOST,
-      user: process.env.DB_USERNAME,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_DATABASE,
-      port: process.env.DB_PORT,
-      ssl:
-        process.env.TIDB_ENABLE_SSL === "true"
-          ? {
-              minVersion: "TLSv1.2",
-              ca: process.env.TIDB_CA_PATH
-                ? fs.readFileSync(process.env.TIDB_CA_PATH)
-                : undefined,
-            }
-          : null,
-    });
-
-    // await connection.execute("DROP TABLE IF EXISTS messages");
-    // await connection.execute("DROP TABLE IF EXISTS users");
-
-    await connection.execute(`
+    // await pool.query("DROP TABLE IF EXISTS users");
+    // await pool.query("DROP TABLE IF EXISTS messages");
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,
         username VARCHAR(255) NOT NULL UNIQUE,
@@ -41,7 +57,7 @@ async function connectMySQL() {
       )
     `);
 
-    await connection.execute(`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS messages (
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT,
@@ -62,7 +78,7 @@ async function saveMessage(name, message) {
   try {
     const timestamp = new Date();
     const filteredMessage = filterProfanity(message);
-    await connection.execute(
+    await pool.query(
       "INSERT INTO messages (name, message, timestamp) VALUES (?, ?, ?)",
       [name, filteredMessage, timestamp]
     );
@@ -75,7 +91,7 @@ async function saveMessage(name, message) {
 
 async function loadChatHistory() {
   try {
-    const [rows] = await connection.execute(
+    const [rows] = await pool.query(
       "SELECT * FROM messages ORDER BY timestamp ASC LIMIT 50"
     );
     return rows;
@@ -87,7 +103,7 @@ async function loadChatHistory() {
 
 async function verifyPassword(username, password) {
   try {
-    const [rows] = await connection.execute(
+    const [rows] = await pool.query(
       "SELECT password FROM users WHERE username = ?",
       [username]
     );
@@ -100,7 +116,7 @@ async function verifyPassword(username, password) {
 
 async function saveUser(username, socketId, password) {
   try {
-    const [result] = await connection.execute(
+    const [result] = await pool.query(
       "INSERT INTO users (username, socket_id, password) VALUES (?, ?, ?)",
       [username, socketId, password]
     );
@@ -113,7 +129,7 @@ async function saveUser(username, socketId, password) {
 
 async function checkUsername(username) {
   try {
-    const [rows] = await connection.execute(
+    const [rows] = await pool.query(
       "SELECT username FROM users WHERE username = ?",
       [username]
     );
@@ -240,10 +256,8 @@ server.on('error', (err) => {
 
 ["SIGINT", "SIGTERM"].forEach((signal) => {
   process.on(signal, async () => {
-    console.log(
-      `\n${signal} received. Closing MySQL connection and exiting...`
-    );
-    await connection.end();
+    console.log(`\n${signal} received. Closing MySQL pool and exiting...`);
+    await pool.end();
     process.exit(0);
   });
 });
