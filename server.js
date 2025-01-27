@@ -2,7 +2,6 @@ import * as dotenv from "dotenv";
 import mysql from "mysql2/promise";
 import { Server } from "socket.io";
 import words from "profane-words";
-import http from "http";
 const PORT = process.env.PORT || 3000;
 dotenv.config();
 
@@ -159,21 +158,14 @@ function filterProfanity(message) {
 
 await connectMySQL();
 
-const server = http.createServer((req, res) => {
-  if (req.url === '/') {
-    res.writeHead(200);
-    res.end('OK');
-    return;
-  }
-});
-
 // Socket.IO Server Setup
-const io = new Server(server, {
+const io = new Server(PORT, {
   cors: {
     origin: "*",
     methods: ["GET", "POST"],
   },
   transports: ["websocket", "polling"],
+  host: "0.0.0.0"
 });
 
 io.on("connection", (socket) => {
@@ -237,21 +229,6 @@ io.on("connection", (socket) => {
     delete users[socket.id];
     io.emit("user-count", io.engine.clientsCount);
   });
-});
-
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on http://0.0.0.0:${PORT}`);
-  console.log(`Socket.IO server ready`);
-});
-
-// Verify server is listening
-server.on('listening', () => {
-  console.log(`TCP server bound to port ${PORT}`);
-});
-
-// Add error handler
-server.on('error', (err) => {
-  console.error('Server error:', err);
 });
 
 ["SIGINT", "SIGTERM"].forEach((signal) => {
