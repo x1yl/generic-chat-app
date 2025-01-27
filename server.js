@@ -2,7 +2,8 @@ import * as dotenv from "dotenv";
 import mysql from "mysql2/promise";
 import { Server } from "socket.io";
 import words from "profane-words";
-
+import http from "http";
+const PORT = process.env.PORT || 3000;
 dotenv.config();
 
 let connection;
@@ -142,13 +143,27 @@ function filterProfanity(message) {
 
 await connectMySQL();
 
+const server = http.createServer((req, res) => {
+  if (req.url === '/') {
+    res.writeHead(200);
+    res.end('OK');
+    return;
+  }
+});
+
 // Socket.IO Server Setup
-const io = new Server(3000, {
+const io = new Server(server, {
   cors: {
     origin: "*",
     methods: ["GET", "POST"],
   },
+  transports: ["websocket", "polling"],
 });
+
+setInterval(() => {
+  http.get('http://generic-chat-app-km0c.onrender.com/')
+    .on('error', err => console.error('Health check failed:', err));
+}, 5 * 60 * 1000);
 
 io.on("connection", (socket) => {
   console.log("user connected");
@@ -161,6 +176,7 @@ io.on("connection", (socket) => {
     const userExists = await checkUsername(username);
 
     if (userExists) {
+      console.log("User exists, attempting login");
       const validPassword = await verifyPassword(username, password);
       if (validPassword) {
         users[socket.id] = username;
@@ -169,9 +185,11 @@ io.on("connection", (socket) => {
           socket.emit("chat-history", history)
         );
       } else {
+        console.log("Invalid password");
         socket.emit("auth-failed");
       }
     } else {
+      console.log("New user registration");
       // New user registration
       const userId = await saveUser(username, socket.id, password);
       if (userId) {
@@ -182,6 +200,7 @@ io.on("connection", (socket) => {
           socket.emit("chat-history", history);
         });
       } else {
+        console.log("Failed to save new user");
         socket.emit("auth-failed");
       }
     }
@@ -207,6 +226,21 @@ io.on("connection", (socket) => {
     delete users[socket.id];
     io.emit("user-count", io.engine.clientsCount);
   });
+});
+
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on http://0.0.0.0:${PORT}`);
+  console.log(`Socket.IO server ready`);
+});
+
+// Verify server is listening
+server.on('listening', () => {
+  console.log(`TCP server bound to port ${PORT}`);
+});
+
+// Add error handler
+server.on('error', (err) => {
+  console.error('Server error:', err);
 });
 
 ["SIGINT", "SIGTERM"].forEach((signal) => {
